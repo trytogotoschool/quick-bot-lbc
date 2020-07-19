@@ -44,10 +44,11 @@ def initList():
     
 def sendMsg(paramMsg):
     responseLog = ""
-    finalMsg = "Annonce(s) : %0d {} %0dReste : {}".format(paramMsg[0],  paramMsg[1])
+    finalMsg = "Annonce(s) : %0d {} %0dReste : {}".format(paramMsg[0],  paramMsg[1]['smsbalance'] - len(paramMsg[1]['numtosend'].split(",")))
     msgSended = False
     try :
-        sending = requests.get(str('https://www.ovh.com/cgi-bin/sms/http2sms.cgi?&account={}&login={}&password={}&from={}&to={}&message={}&noStop=1&contentType=application/json'.format(config['accountapi'],config['loginapi'],config['passwordapi'],config['fromsender'],config['numtosend'],finalMsg)))
+        #je pourrais utiliser config directement ici mais vu que j'aime pas la porté des variables en python...
+        sending = requests.get(str('https://www.ovh.com/cgi-bin/sms/http2sms.cgi?&account={}&login={}&password={}&from={}&to={}&message={}&noStop=1&contentType=application/json'.format(paramMsg[1]['accountapi'],paramMsg[1]['loginapi'],paramMsg[1]['passwordapi'],paramMsg[1]['fromsender'],paramMsg[1]['numtosend'],finalMsg)))
         if sending.status_code == 200 :
             responseLog = finalMsg.replace("%0d", "\n")
             msgSended = True
@@ -67,10 +68,10 @@ liste = initList()
 paramMsg = []
 txtMsg = ""
 
-
+liste.pop()
 
 while True :
-    time.sleep(600)
+    time.sleep(5)
     responseLog = ""
     try :
         page = requests.post(str('https://api.leboncoin.fr/api/adfinder/v1/search'), verify=False, headers=headers, json=data)
@@ -82,15 +83,14 @@ while True :
             if a['list_id'] not in liste:
                 txtMsg += "{}{}".format(a['url'],"%0d")
                 needNotif = True
-
         if needNotif == True :
-            credit = config['smsbalance'] - len(config['numtosend'].split(","))
             paramMsg.append(txtMsg)
-            paramMsg.append(str(credit))
+            paramMsg.append(config)
             if  txtMsg != "" and sendMsg(paramMsg): #comparaison paraisseuse 
                 liste = newListe
-                config['smsbalance'] = credit
+                config['smsbalance'] -= len(config['numtosend'].split(","))
                 needNotif = False
+                liste.pop()
             # traitement du cas ou l'envoi d'un message a echoué et que l'annonce a été del entre temps
             # si txtmsg n'est pas reset risque à la fin de de ce bloc risque de doublons en cas de fail d'envoi
             if txtMsg == "": 
