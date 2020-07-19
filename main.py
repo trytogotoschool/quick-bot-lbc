@@ -68,10 +68,9 @@ liste = initList()
 paramMsg = []
 txtMsg = ""
 
-liste.pop()
 
 while True :
-    time.sleep(5)
+    time.sleep(600)
     responseLog = ""
     try :
         page = requests.post(str('https://api.leboncoin.fr/api/adfinder/v1/search'), verify=False, headers=headers, json=data)
@@ -90,7 +89,6 @@ while True :
                 liste = newListe
                 config['smsbalance'] -= len(config['numtosend'].split(","))
                 needNotif = False
-                liste.pop()
             # traitement du cas ou l'envoi d'un message a echoué et que l'annonce a été del entre temps
             # si txtmsg n'est pas reset risque à la fin de de ce bloc risque de doublons en cas de fail d'envoi
             if txtMsg == "": 
